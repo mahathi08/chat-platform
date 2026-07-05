@@ -1,9 +1,17 @@
-from sqlalchemy.orm import sessionmaker
+from collections.abc import Generator
 
-from app.db.database import engine
+from sqlalchemy.orm import Session
 
-SessionLocal = sessionmaker(
-    autocommit=False,
-    autoflush=False,
-    bind=engine
-)
+from app.db.database import SessionLocal
+
+
+def get_db() -> Generator[Session, None, None]:
+    """
+    FastAPI dependency that provides a database session.
+    Ensures the session is always closed after the request.
+    """
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()

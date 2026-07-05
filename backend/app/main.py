@@ -1,20 +1,92 @@
-from fastapi import FastAPI
+from contextlib import asynccontextmanager
+from pathlib import Path
 
-from app.api.auth import router as auth_router
-from app.api.servers import router as server_router
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+
+from app.api.router import api_router
+from app.core.config import settings
+from app.db.database import Base, engine
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """
+    Application startup and shutdown events.
+    """
+
+    # Create database tables
+    # (Use Alembic migrations in production.)
+    Base.metadata.create_all(bind=engine)
+
+    yield
+
+    # Shutdown logic (if needed)
+
 
 app = FastAPI(
-    title="Chat Platform API",
-    version="1.0.0",
+    title=settings.APP_NAME,
+    version=settings.APP_VERSION,
+    description="Discord-like Real-Time Chat Platform Backend",
+    debug=settings.DEBUG,
+    lifespan=lifespan,
 )
 
-app.include_router(auth_router)
-app.include_router(server_router)
+# -------------------------
+# Ensure upload directory exists
+# -------------------------
 
+Path(settings.UPLOAD_DIR).mkdir(
+    parents=True,
+    exist_ok=True,
+)
 
-@app.get("/")
+# -------------------------
+# CORS
+# -------------------------
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.BACKEND_CORS_ORIGINS,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# -------------------------
+# Static Files
+# -------------------------
+
+app.mount(
+    "/uploads",
+    StaticFiles(directory=settings.UPLOAD_DIR),
+    name="uploads",
+)
+
+# -------------------------
+# API
+# -------------------------
+
+app.include_router(
+    api_router,
+    prefix=settings.API_V1_PREFIX,
+)
+
+# -------------------------
+# Health Check
+# -------------------------
+
+@app.get("/", tags=["Root"])
 def root():
     return {
-        "message": "Chat Platform API",
-        "status": "running",
+        "message": f"{settings.APP_NAME} is running.",
+        "version": settings.APP_VERSION,
+    }
+
+
+@app.get("/health", tags=["Health"])
+def health():
+    return {
+        "status": "healthy",
     }
