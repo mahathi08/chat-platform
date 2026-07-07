@@ -3,7 +3,7 @@ import {
 } from "react-router-dom";
 
 // Layout
-import DashboardLayout from "../components/layout/DashboardLayout";
+import DashboardLayout from "../layouts/DashboardLayout";
 
 // Route Guards
 import ProtectedRoute from "../components/common/ProtectedRoute";
