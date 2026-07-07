@@ -1,46 +1,81 @@
-import { Hash, Users } from "lucide-react";
+import {
+    Hash,
+    Users,
+    Search,
+    Bell,
+    Pin,
+} from "lucide-react";
 
-interface Props {
+interface ChatHeaderProps {
     channelName?: string;
     description?: string;
 }
 
 const ChatHeader = ({
     channelName = "general",
-    description = "",
-}: Props) => {
+    description,
+}: ChatHeaderProps) => {
     return (
-        <header className="flex h-16 items-center justify-between border-b border-gray-200 bg-white px-6 dark:border-gray-800 dark:bg-gray-950">
+        <header className="flex h-16 items-center justify-between border-b border-zinc-800 bg-zinc-900 px-6">
 
-            <div>
+            <div className="flex items-center gap-3">
 
-                <div className="flex items-center gap-2">
+                <Hash
+                    size={22}
+                    className="text-zinc-400"
+                />
 
-                    <Hash size={20} />
+                <div>
 
-                    <h2 className="text-xl font-semibold">
+                    <h2 className="font-semibold text-white">
 
                         {channelName}
 
                     </h2>
 
+                    {description && (
+                        <p className="text-sm text-zinc-400">
+
+                            {description}
+
+                        </p>
+                    )}
+
                 </div>
-
-                {description && (
-                    <p className="text-sm text-gray-500">
-
-                        {description}
-
-                    </p>
-                )}
 
             </div>
 
-            <button
-                className="rounded-lg p-2 hover:bg-gray-100 dark:hover:bg-gray-800"
-            >
-                <Users size={20} />
-            </button>
+            <div className="flex items-center gap-2">
+
+                <button
+                    className="rounded-lg p-2 text-zinc-400 transition hover:bg-zinc-800 hover:text-white"
+                    title="Search"
+                >
+                    <Search size={20} />
+                </button>
+
+                <button
+                    className="rounded-lg p-2 text-zinc-400 transition hover:bg-zinc-800 hover:text-white"
+                    title="Pinned Messages"
+                >
+                    <Pin size={20} />
+                </button>
+
+                <button
+                    className="rounded-lg p-2 text-zinc-400 transition hover:bg-zinc-800 hover:text-white"
+                    title="Notifications"
+                >
+                    <Bell size={20} />
+                </button>
+
+                <button
+                    className="rounded-lg p-2 text-zinc-400 transition hover:bg-zinc-800 hover:text-white"
+                    title="Members"
+                >
+                    <Users size={20} />
+                </button>
+
+            </div>
 
         </header>
     );

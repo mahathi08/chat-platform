@@ -1,77 +1,129 @@
 import api from "./api";
 
-export interface DMCreate {
-    receiver_id: number;
-    content: string;
-    attachments?: string[];
-}
+export interface DirectMessageCreate {
 
-export interface DMUpdate {
     content: string;
+
 }
 
 class DMService {
+
     async getConversations() {
-        const response = await api.get("/dms");
+
+        const response =
+            await api.get(
+                "/dms/conversations"
+            );
 
         return response.data;
+
     }
 
-    async getConversation(userId: number) {
-        const response = await api.get(
-            `/dms/${userId}`
-        );
-
-        return response.data;
-    }
-
-    async sendMessage(data: DMCreate) {
-        const response = await api.post(
-            "/dms",
-            data
-        );
-
-        return response.data;
-    }
-
-    async editMessage(
-        messageId: number,
-        data: DMUpdate
+    async createConversation(
+        recipientId: number,
     ) {
-        const response = await api.put(
-            `/dms/messages/${messageId}`,
-            data
-        );
+
+        const response =
+            await api.post(
+                `/dms/conversations/${recipientId}`
+            );
 
         return response.data;
+
     }
 
-    async deleteMessage(messageId: number) {
+    async getConversation(
+        conversationId: number,
+    ) {
+
+        const response =
+            await api.get(
+                `/dms/conversations/${conversationId}`
+            );
+
+        return response.data;
+
+    }
+
+    async getMessages(
+        conversationId: number,
+        page = 1,
+        pageSize = 50,
+    ) {
+
+        const response =
+            await api.get(
+                `/dms/conversations/${conversationId}/messages`,
+                {
+                    params: {
+                        page,
+                        page_size: pageSize,
+                    },
+                }
+            );
+
+        return response.data;
+
+    }
+
+    async sendMessage(
+        conversationId: number,
+        content: string,
+    ) {
+
+        const response =
+            await api.post(
+                `/dms/conversations/${conversationId}/messages`,
+                {
+                    content,
+                }
+            );
+
+        return response.data;
+
+    }
+
+    async markMessageRead(
+        messageId: number,
+    ) {
+
+        const response =
+            await api.patch(
+                `/dms/messages/${messageId}/read`
+            );
+
+        return response.data;
+
+    }
+
+    async deleteMessage(
+        messageId: number,
+    ) {
+
         await api.delete(
             `/dms/messages/${messageId}`
         );
+
     }
 
-    async markConversationRead(userId: number) {
-        const response = await api.post(
-            `/dms/${userId}/read`
-        );
+    async searchUsers(
+        username: string,
+    ) {
+
+        const response =
+            await api.get(
+                "/users",
+                {
+                    params: {
+                        username,
+                    },
+                }
+            );
 
         return response.data;
+
     }
 
-    async searchUsers(query: string) {
-        const response = await api.get(
-            "/users",
-            {
-                params: {
-                    username: query,
-                },
-            }
-        );
-
-        return response.data;
-    }
 }
 
 export default new DMService();

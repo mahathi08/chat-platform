@@ -1,38 +1,42 @@
 import api from "./api";
 
-export interface ChannelCreate {
-    name: string;
-    server_id: number;
-    type: string;
-    topic?: string;
-}
-
-export interface ChannelUpdate {
-    name?: string;
-    topic?: string;
-}
+import type {
+    ChannelCreate,
+    ChannelUpdate,
+} from "../types/channel";
 
 class ChannelService {
-    async createChannel(data: ChannelCreate) {
+
+    async createChannel(
+        serverId: number,
+        data: ChannelCreate,
+    ) {
+
         const response = await api.post(
-            "/channels",
-            data
+            `/channels/servers/${serverId}`,
+            data,
         );
 
         return response.data;
     }
 
-    async getChannel(channelId: number) {
+    async getServerChannels(
+        serverId: number,
+    ) {
+
         const response = await api.get(
-            `/channels/${channelId}`
+            `/channels/servers/${serverId}`,
         );
 
         return response.data;
     }
 
-    async getServerChannels(serverId: number) {
+    async getChannel(
+        channelId: number,
+    ) {
+
         const response = await api.get(
-            `/servers/${serverId}/channels`
+            `/channels/${channelId}`,
         );
 
         return response.data;
@@ -40,37 +44,27 @@ class ChannelService {
 
     async updateChannel(
         channelId: number,
-        data: ChannelUpdate
+        data: ChannelUpdate,
     ) {
+
         const response = await api.put(
             `/channels/${channelId}`,
-            data
+            data,
         );
 
         return response.data;
     }
 
-    async deleteChannel(channelId: number) {
+    async deleteChannel(
+        channelId: number,
+    ) {
+
         await api.delete(
-            `/channels/${channelId}`
-        );
-    }
-
-    async joinChannel(channelId: number) {
-        const response = await api.post(
-            `/channels/${channelId}/join`
+            `/channels/${channelId}`,
         );
 
-        return response.data;
     }
 
-    async leaveChannel(channelId: number) {
-        const response = await api.post(
-            `/channels/${channelId}/leave`
-        );
-
-        return response.data;
-    }
 }
 
 export default new ChannelService();

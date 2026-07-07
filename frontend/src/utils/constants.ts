@@ -6,9 +6,19 @@ export const API_BASE_URL =
 
 // WebSocket
 
+// Backend websocket endpoint:
+//
+// app.include_router(api_router, prefix="/api/v1")
+// @router.websocket("/ws")
+//
+// therefore:
+//
+// ws://localhost:8000/api/v1/ws
+//
+
 export const WS_URL =
     import.meta.env.VITE_WS_URL ||
-    "ws://localhost:8000/ws";
+    "ws://localhost:8000/api/v1/ws";
 
 // Storage Keys
 
@@ -25,13 +35,16 @@ export const DEFAULT_PAGE_SIZE = 25;
 
 // Upload
 
-export const MAX_UPLOAD_SIZE = 10 * 1024 * 1024;
+export const MAX_UPLOAD_SIZE =
+    10 * 1024 * 1024;
 
 // Application
 
-export const APP_NAME = "Real-Time Chat Platform";
+export const APP_NAME =
+    "Real-Time Chat Platform";
 
-export const APP_VERSION = "1.0.0";
+export const APP_VERSION =
+    "1.0.0";
 
 // Message Types
 
@@ -48,4 +61,4 @@ export const USER_STATUS = {
     OFFLINE: "offline",
     AWAY: "away",
     DND: "dnd",
-};
+} as const;

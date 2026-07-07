@@ -1,62 +1,111 @@
-import { Link, useLocation } from "react-router-dom";
-
+import { Link } from "react-router-dom";
 import {
-    Home,
-    Compass,
-    Bell,
-    Settings,
+    Hash,
     Plus,
+    LogOut,
+    Settings,
 } from "lucide-react";
 
-import clsx from "clsx";
+import useAuth from "../../hooks/useAuth";
+import { useServer } from "../../contexts/ServerContext";
 
 const Sidebar = () => {
-    const location = useLocation();
+    const { currentServer } = useServer();
 
-    const links = [
-        {
-            icon: Home,
-            path: "/",
-        },
-        {
-            icon: Compass,
-            path: "/explore",
-        },
-        {
-            icon: Bell,
-            path: "/notifications",
-        },
-        {
-            icon: Settings,
-            path: "/settings/account",
-        },
-    ];
+    const { user, logout } = useAuth();
 
     return (
-        <aside className="flex w-20 flex-col items-center gap-4 border-r border-gray-200 bg-white py-5 dark:border-gray-800 dark:bg-gray-950">
+        <aside className="flex w-72 flex-col border-r border-zinc-800 bg-zinc-900">
 
-            <Link
-                to="/servers/create"
-                className="rounded-full bg-blue-600 p-3 text-white transition hover:bg-blue-700"
-            >
-                <Plus size={22} />
-            </Link>
+            {/* Server Header */}
+            <div className="border-b border-zinc-800 p-4">
+                <h2 className="truncate text-lg font-bold text-white">
+                    {currentServer?.name ?? "Select a Server"}
+                </h2>
 
-            {links.map(({ icon: Icon, path }) => (
-                <Link
-                    key={path}
-                    to={path}
-                    className={clsx(
-                        "rounded-xl p-3 transition",
+                {currentServer?.description && (
+                    <p className="mt-1 truncate text-sm text-zinc-400">
+                        {currentServer.description}
+                    </p>
+                )}
+            </div>
 
-                        location.pathname === path
-                            ? "bg-blue-600 text-white"
-                            : "text-gray-500 hover:bg-gray-200 dark:hover:bg-gray-800"
+            {/* Channels */}
+            <div className="flex-1 overflow-y-auto p-3">
+
+                <div className="mb-3 flex items-center justify-between">
+
+                    <h3 className="text-xs font-semibold uppercase tracking-wide text-zinc-400">
+                        Channels
+                    </h3>
+
+                    {currentServer && (
+                        <Link
+                            to={`/servers/${currentServer.id}/channels/create`}
+                            className="rounded p-1 hover:bg-zinc-800"
+                        >
+                            <Plus size={16} />
+                        </Link>
                     )}
+
+                </div>
+
+                {currentServer?.channels?.length ? (
+                    currentServer.channels.map(
+                        (channel) => (
+                            <Link
+                                key={channel.id}
+                                to={`/channels/${channel.id}`}
+                                className="mb-1 flex items-center gap-2 rounded-lg px-3 py-2 text-zinc-300 transition hover:bg-zinc-800 hover:text-white"
+                            >
+                                <Hash size={18} />
+
+                                <span>
+                                    {channel.name}
+                                </span>
+                            </Link>
+                        )
+                    )
+                ) : (
+                    <div className="text-sm text-zinc-500">
+                        No channels
+                    </div>
+                )}
+            </div>
+
+            {/* User */}
+            <div className="border-t border-zinc-800 p-4">
+
+                <div className="mb-4">
+
+                    <div className="font-semibold text-white">
+                        {user?.username}
+                    </div>
+
+                    <div className="text-sm text-zinc-400">
+                        {user?.email}
+                    </div>
+
+                </div>
+
+                <Link
+                    to="/settings/account"
+                    className="mb-2 flex items-center gap-2 rounded-lg px-3 py-2 text-zinc-300 hover:bg-zinc-800"
                 >
-                    <Icon size={22} />
+                    <Settings size={18} />
+                    Settings
                 </Link>
-            ))}
+
+                <button
+                    onClick={logout}
+                    className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-red-400 hover:bg-red-500/10"
+                >
+                    <LogOut size={18} />
+                    Logout
+                </button>
+
+            </div>
+
         </aside>
     );
 };

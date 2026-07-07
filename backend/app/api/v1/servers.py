@@ -16,6 +16,7 @@ from app.schemas.server import (
     ServerUpdate,
     ServerResponse,
     ServerListResponse,
+    ServerMemberResponse,
 )
 
 from app.services.server_service import (
@@ -26,6 +27,7 @@ from app.services.server_service import (
     delete_server,
     join_server,
     leave_server,
+    get_server_members,
 )
 
 router = APIRouter(
@@ -44,9 +46,6 @@ def create(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """
-    Create a new server.
-    """
     return create_server(
         db,
         current_user.id,
@@ -62,9 +61,6 @@ def my_servers(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """
-    Get all servers of current user.
-    """
     return get_user_servers(
         db,
         current_user.id,
@@ -79,10 +75,26 @@ def get(
     server_id: int,
     db: Session = Depends(get_db),
 ):
-    """
-    Get server details.
-    """
     return get_server_by_id(
+        db,
+        server_id,
+    )
+
+
+# ===================================================
+# NEW MEMBERS ENDPOINT
+# ===================================================
+
+@router.get(
+    "/{server_id}/members",
+    response_model=list[ServerMemberResponse],
+)
+def members(
+    server_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    return get_server_members(
         db,
         server_id,
     )
@@ -98,9 +110,6 @@ def update(
     db: Session = Depends(get_db),
     member: ServerMember = Depends(get_server_admin),
 ):
-    """
-    Update server.
-    """
     return update_server(
         db,
         server_id,
@@ -117,9 +126,6 @@ def delete(
     db: Session = Depends(get_db),
     member: ServerMember = Depends(get_server_owner),
 ):
-    """
-    Delete server.
-    """
     delete_server(
         db,
         server_id,
@@ -130,16 +136,12 @@ def delete(
 
 @router.post(
     "/{server_id}/join",
-    status_code=status.HTTP_200_OK,
 )
 def join(
     server_id: int,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """
-    Join server.
-    """
     return join_server(
         db,
         server_id,
@@ -149,16 +151,12 @@ def join(
 
 @router.post(
     "/{server_id}/leave",
-    status_code=status.HTTP_200_OK,
 )
 def leave(
     server_id: int,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """
-    Leave server.
-    """
     return leave_server(
         db,
         server_id,

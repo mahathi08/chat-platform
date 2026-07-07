@@ -2,9 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
 import { useForm } from "react-hook-form";
-
 import { z } from "zod";
-
 import { zodResolver } from "@hookform/resolvers/zod";
 
 import useAuth from "../../hooks/useAuth";
@@ -18,11 +16,13 @@ const schema = z
             .string()
             .min(3, "Username must be at least 3 characters"),
 
-        email: z.email("Invalid email"),
+        email: z
+            .string()
+            .email("Enter a valid email"),
 
         password: z
             .string()
-            .min(6, "Password must be at least 6 characters"),
+            .min(8, "Password must be at least 8 characters"),
 
         confirmPassword: z.string(),
     })
@@ -41,8 +41,7 @@ const Register = () => {
 
     const { register: registerUser } = useAuth();
 
-    const [serverError, setServerError] =
-        useState("");
+    const [serverError, setServerError] = useState("");
 
     const {
         register,
@@ -55,10 +54,13 @@ const Register = () => {
         resolver: zodResolver(schema),
     });
 
-    const onSubmit = async (
-        data: RegisterForm
-    ) => {
+    const onSubmit = async (data: RegisterForm) => {
+
+        console.log("========== REGISTER ==========");
+        console.log(data);
+
         try {
+
             setServerError("");
 
             await registerUser({
@@ -67,19 +69,27 @@ const Register = () => {
                 password: data.password,
             });
 
+            console.log("REGISTER SUCCESS");
+
             navigate("/");
+
         } catch (error: any) {
+
+            console.log("REGISTER ERROR");
+            console.log(error);
+            console.log(error?.response);
+            console.log(error?.response?.data);
+
             setServerError(
                 error?.response?.data?.detail ??
-                    "Registration failed."
+                "Registration failed."
             );
         }
     };
 
     return (
-        <div className="flex min-h-screen items-center justify-center bg-gray-100 dark:bg-gray-900">
-
-            <div className="w-full max-w-md rounded-xl bg-white p-8 shadow-lg dark:bg-gray-800">
+        <div className="flex min-h-screen items-center justify-center bg-gray-100 dark:bg-zinc-900">
+            <div className="w-full max-w-md rounded-xl bg-white p-8 shadow-xl dark:bg-zinc-800">
 
                 <h1 className="mb-2 text-center text-3xl font-bold">
                     Create Account
@@ -90,7 +100,7 @@ const Register = () => {
                 </p>
 
                 {serverError && (
-                    <div className="mb-4 rounded bg-red-100 p-3 text-red-700">
+                    <div className="mb-4 rounded-lg bg-red-100 p-3 text-red-700">
                         {serverError}
                     </div>
                 )}
@@ -99,12 +109,11 @@ const Register = () => {
                     onSubmit={handleSubmit(onSubmit)}
                     className="space-y-5"
                 >
+
                     <Input
                         label="Username"
                         placeholder="Username"
-                        error={
-                            errors.username?.message
-                        }
+                        error={errors.username?.message}
                         {...register("username")}
                     />
 
@@ -112,9 +121,7 @@ const Register = () => {
                         label="Email"
                         type="email"
                         placeholder="Email"
-                        error={
-                            errors.email?.message
-                        }
+                        error={errors.email?.message}
                         {...register("email")}
                     />
 
@@ -122,9 +129,7 @@ const Register = () => {
                         label="Password"
                         type="password"
                         placeholder="Password"
-                        error={
-                            errors.password?.message
-                        }
+                        error={errors.password?.message}
                         {...register("password")}
                     />
 
@@ -132,13 +137,8 @@ const Register = () => {
                         label="Confirm Password"
                         type="password"
                         placeholder="Confirm Password"
-                        error={
-                            errors.confirmPassword
-                                ?.message
-                        }
-                        {...register(
-                            "confirmPassword"
-                        )}
+                        error={errors.confirmPassword?.message}
+                        {...register("confirmPassword")}
                     />
 
                     <Button
@@ -147,15 +147,15 @@ const Register = () => {
                     >
                         Register
                     </Button>
+
                 </form>
 
-                <div className="mt-5 text-center">
-
+                <div className="mt-5 text-center text-sm text-gray-500">
                     Already have an account?
 
                     <Link
                         to="/login"
-                        className="ml-1 font-semibold text-blue-600"
+                        className="ml-1 font-semibold text-blue-600 hover:underline"
                     >
                         Login
                     </Link>
@@ -163,7 +163,6 @@ const Register = () => {
                 </div>
 
             </div>
-
         </div>
     );
 };

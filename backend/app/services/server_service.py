@@ -13,6 +13,12 @@ from app.schemas.server import (
     ServerUpdate,
     ServerListResponse,
 )
+from app.models.channel import Channel
+
+from app.models.enums import (
+    MemberRole,
+    ChannelType,
+)
 
 def get_server(
     db: Session,
@@ -50,14 +56,13 @@ def get_server_member(
         .first()
     )
 
-
 def create_server(
     db: Session,
     owner_id: int,
     data: ServerCreate,
 ) -> Server:
     """
-    Create a new server.
+    Create a server with a default #general channel.
     """
 
     existing = (
@@ -75,6 +80,10 @@ def create_server(
             detail="You already have a server with this name.",
         )
 
+    # ---------------------------------------
+    # Create Server
+    # ---------------------------------------
+
     server = Server(
         name=data.name,
         description=data.description,
@@ -83,23 +92,42 @@ def create_server(
     )
 
     db.add(server)
+
     db.flush()
 
-    member = ServerMember(
+    # ---------------------------------------
+    # Owner Membership
+    # ---------------------------------------
+
+    owner_member = ServerMember(
         server_id=server.id,
         user_id=owner_id,
         role=MemberRole.OWNER,
     )
 
-    db.add(member)
+    db.add(owner_member)
+
+    # ---------------------------------------
+    # Default #general channel
+    # ---------------------------------------
+
+    general_channel = Channel(
+        server_id=server.id,
+        name="general",
+        description="General discussion",
+        type=ChannelType.TEXT,
+        position=0,
+    )
+
+    db.add(general_channel)
+
+    # ---------------------------------------
 
     db.commit()
 
     db.refresh(server)
 
     return server
-
-
 def get_server_by_id(
     db: Session,
     server_id: int,

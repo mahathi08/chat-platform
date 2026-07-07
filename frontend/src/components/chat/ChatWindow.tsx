@@ -1,18 +1,21 @@
 import ChatHeader from "../layout/ChatHeader";
 import MessageList from "./MessageList";
-import TypingIndicator from "./TypingIndicator";
 import ChatInput from "./ChatInput";
 
+import type { Message } from "../../types/message";
+
 interface ChatWindowProps {
-    channelId: number;
+    messages: Message[];
     channelName?: string;
     description?: string;
+    onSend: (content: string) => Promise<void>;
 }
 
 const ChatWindow = ({
-    channelId,
+    messages,
     channelName,
     description,
+    onSend,
 }: ChatWindowProps) => {
     return (
         <div className="flex h-full flex-col">
@@ -23,18 +26,10 @@ const ChatWindow = ({
             />
 
             <div className="flex-1 overflow-hidden">
-
-                <MessageList
-                    channelId={channelId}
-                />
-
+                <MessageList messages={messages} />
             </div>
 
-            <TypingIndicator />
-
-            <ChatInput
-                channelId={channelId}
-            />
+            <ChatInput onSend={onSend} />
 
         </div>
     );

@@ -1,63 +1,67 @@
 import {
     createContext,
+    useCallback,
     useContext,
     useEffect,
     useMemo,
     useState,
-    ReactNode,
 } from "react";
+import type {ReactNode} from "react";
+import authService from "../services/auth.service";
 
-import authService, {
+import type {
     LoginRequest,
     RegisterRequest,
 } from "../services/auth.service";
+
+import type { User } from "../types/user";
 
 import {
     getAccessToken,
     getUser,
     saveUser,
+    clearStorage,
 } from "../utils/storage";
-
-export interface User {
-    id: number;
-    username: string;
-    email: string;
-    avatar_url?: string;
-    bio?: string;
-    status?: string;
-}
 
 interface AuthContextType {
     user: User | null;
     loading: boolean;
     isAuthenticated: boolean;
 
-    login: (credentials: LoginRequest) => Promise<void>;
-    register: (data: RegisterRequest) => Promise<void>;
+    login: (
+        credentials: LoginRequest
+    ) => Promise<void>;
+
+    register: (
+        data: RegisterRequest
+    ) => Promise<void>;
+
     logout: () => Promise<void>;
 
     refreshUser: () => Promise<void>;
-    setUser: React.Dispatch<React.SetStateAction<User | null>>;
+
+    setUser: React.Dispatch<
+        React.SetStateAction<User | null>
+    >;
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(
-    undefined
-);
+const AuthContext =
+    createContext<AuthContextType | undefined>(
+        undefined
+    );
 
 export const AuthProvider = ({
     children,
 }: {
     children: ReactNode;
 }) => {
-    const [user, setUser] = useState<User | null>(null);
+    const [user, setUser] =
+        useState<User | null>(null);
 
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] =
+        useState(true);
 
-    useEffect(() => {
-        initialize();
-    }, []);
-
-    const initialize = async () => {
+    const initialize = useCallback(async () => {
         try {
             const token = getAccessToken();
 
@@ -66,7 +70,8 @@ export const AuthProvider = ({
                 return;
             }
 
-            const cachedUser = getUser<User>();
+            const cachedUser =
+                getUser<User>();
 
             if (cachedUser) {
                 setUser(cachedUser);
@@ -80,10 +85,18 @@ export const AuthProvider = ({
             setUser(currentUser);
         } catch (error) {
             console.error(error);
+
+            clearStorage();
+
+            setUser(null);
         } finally {
             setLoading(false);
         }
-    };
+    }, []);
+
+    useEffect(() => {
+        initialize();
+    }, [initialize]);
 
     const login = async (
         credentials: LoginRequest
@@ -91,11 +104,14 @@ export const AuthProvider = ({
         setLoading(true);
 
         try {
-            const user = await authService.login(
-                credentials
-            );
+            const currentUser =
+                await authService.login(
+                    credentials
+                );
 
-            setUser(user);
+            saveUser(currentUser);
+
+            setUser(currentUser);
         } finally {
             setLoading(false);
         }
@@ -121,23 +137,24 @@ export const AuthProvider = ({
     const logout = async () => {
         await authService.logout();
 
+        clearStorage();
+
         setUser(null);
     };
 
     const refreshUser = async () => {
-        const current =
+        const currentUser =
             await authService.getCurrentUser();
 
-        saveUser(current);
+        saveUser(currentUser);
 
-        setUser(current);
+        setUser(currentUser);
     };
 
     const value = useMemo(
         () => ({
             user,
             loading,
-
             isAuthenticated: !!user,
 
             login,
@@ -159,7 +176,8 @@ export const AuthProvider = ({
 };
 
 export const useAuthContext = () => {
-    const context = useContext(AuthContext);
+    const context =
+        useContext(AuthContext);
 
     if (!context) {
         throw new Error(

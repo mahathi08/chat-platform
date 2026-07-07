@@ -10,8 +10,6 @@ from app.websocket.rooms import (
     join_conversation,
     leave_conversation,
     broadcast_to_channel,
-    broadcast_to_server,
-    broadcast_to_conversation,
 )
 
 from app.websocket.presence import (
@@ -19,15 +17,30 @@ from app.websocket.presence import (
     stop_typing,
 )
 
-from app.websocket.manager import manager
+
+# =====================================================
+# Main Event Dispatcher
+# =====================================================
 
 async def handle_event(
     websocket: WebSocket,
     user: User,
     data: dict,
 ):
-
     event = data.get("event")
+
+    if not event:
+        await websocket.send_json(
+            {
+                "event": "error",
+                "message": "Missing event.",
+            }
+        )
+        return
+
+    # -------------------------------
+    # Ping
+    # -------------------------------
 
     if event == "ping":
 
@@ -36,6 +49,10 @@ async def handle_event(
                 "event": "pong",
             }
         )
+
+    # -------------------------------
+    # Channel
+    # -------------------------------
 
     elif event == "join_channel":
 
@@ -51,6 +68,10 @@ async def handle_event(
             data,
         )
 
+    # -------------------------------
+    # Server
+    # -------------------------------
+
     elif event == "join_server":
 
         await handle_join_server(
@@ -65,6 +86,10 @@ async def handle_event(
             data,
         )
 
+    # -------------------------------
+    # Direct Messages
+    # -------------------------------
+
     elif event == "join_dm":
 
         await handle_join_dm(
@@ -78,6 +103,10 @@ async def handle_event(
             user,
             data,
         )
+
+    # -------------------------------
+    # Typing
+    # -------------------------------
 
     elif event == "typing_start":
 
@@ -98,79 +127,94 @@ async def handle_event(
         await websocket.send_json(
             {
                 "event": "error",
-                "message": "Unknown event.",
+                "message": f"Unknown event '{event}'.",
             }
         )
+
+
+# =====================================================
+# Channel
+# =====================================================
 
 async def handle_join_channel(
     user: User,
     data: dict,
 ):
-
-    channel_id = data["channel_id"]
+    channel_id = int(data["channel_id"])
 
     join_channel(
         channel_id,
         user.id,
     )
 
+
 async def handle_leave_channel(
     user: User,
     data: dict,
 ):
-
     leave_channel(
-        data["channel_id"],
+        int(data["channel_id"]),
         user.id,
     )
+
+
+# =====================================================
+# Server
+# =====================================================
 
 async def handle_join_server(
     user: User,
     data: dict,
 ):
-
     join_server(
-        data["server_id"],
+        int(data["server_id"]),
         user.id,
     )
+
 
 async def handle_leave_server(
     user: User,
     data: dict,
 ):
-
     leave_server(
-        data["server_id"],
+        int(data["server_id"]),
         user.id,
     )
+
+
+# =====================================================
+# Direct Messages
+# =====================================================
 
 async def handle_join_dm(
     user: User,
     data: dict,
 ):
-
     join_conversation(
-        data["conversation_id"],
+        int(data["conversation_id"]),
         user.id,
     )
+
 
 async def handle_leave_dm(
     user: User,
     data: dict,
 ):
-
     leave_conversation(
-        data["conversation_id"],
+        int(data["conversation_id"]),
         user.id,
     )
 
+
+# =====================================================
+# Typing
+# =====================================================
 
 async def handle_typing_start(
     user: User,
     data: dict,
 ):
-
-    channel_id = data["channel_id"]
+    channel_id = int(data["channel_id"])
 
     start_typing(
         channel_id,
@@ -181,16 +225,17 @@ async def handle_typing_start(
         channel_id,
         {
             "event": "typing_start",
+            "channel_id": channel_id,
             "user_id": user.id,
         },
     )
+
 
 async def handle_typing_stop(
     user: User,
     data: dict,
 ):
-
-    channel_id = data["channel_id"]
+    channel_id = int(data["channel_id"])
 
     stop_typing(
         channel_id,
@@ -200,9 +245,8 @@ async def handle_typing_stop(
     await broadcast_to_channel(
         channel_id,
         {
-            "event": "typing_start",
+            "event": "typing_stop",
+            "channel_id": channel_id,
             "user_id": user.id,
         },
     )
-
-    

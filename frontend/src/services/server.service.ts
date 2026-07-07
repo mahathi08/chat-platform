@@ -1,57 +1,129 @@
 import api from "./api";
 
+import type {
+    Server,
+    ServerCreate,
+    ServerUpdate,
+    ServerListResponse,
+} from "../types/server";
+
 class ServerService {
-    async getServers() {
-        const response = await api.get("/servers");
+    async getServers(): Promise<ServerListResponse> {
+        const response =
+            await api.get<ServerListResponse>(
+                "/servers"
+            );
+
         return response.data;
     }
 
-    async getServer(serverId: number) {
-        const response = await api.get(`/servers/${serverId}`);
+    async getServer(
+        serverId: number
+    ): Promise<Server> {
+        const response =
+            await api.get<Server>(
+                `/servers/${serverId}`
+            );
+
         return response.data;
     }
 
-    async createServer(data: {
-        name: string;
-        description?: string;
-        icon_url?: string;
-    }) {
-        const response = await api.post("/servers", data);
+    async createServer(
+        data: ServerCreate
+    ): Promise<Server> {
+        const response =
+            await api.post<Server>(
+                "/servers",
+                data
+            );
+
         return response.data;
     }
 
     async updateServer(
         serverId: number,
-        data: {
-            name?: string;
-            description?: string;
-            icon_url?: string;
-        }
+        data: ServerUpdate
+    ): Promise<Server> {
+        const response =
+            await api.put<Server>(
+                `/servers/${serverId}`,
+                data
+            );
+
+        return response.data;
+    }
+
+    async deleteServer(
+        serverId: number
+    ): Promise<void> {
+        await api.delete(
+            `/servers/${serverId}`
+        );
+    }
+
+    async joinServer(
+        serverId: number
+    ): Promise<{ message: string }> {
+        const response =
+            await api.post<{
+                message: string;
+            }>(
+                `/servers/${serverId}/join`
+            );
+
+        return response.data;
+    }
+
+    async leaveServer(
+        serverId: number
+    ): Promise<{ message: string }> {
+        const response =
+            await api.post<{
+                message: string;
+            }>(
+                `/servers/${serverId}/leave`
+            );
+
+        return response.data;
+    }
+
+    async getMembers(
+        serverId: number
     ) {
-        const response = await api.put(
-            `/servers/${serverId}`,
-            data
-        );
+        const response =
+            await api.get(
+                `/servers/${serverId}/members`
+            );
 
         return response.data;
     }
 
-    async deleteServer(serverId: number) {
-        await api.delete(`/servers/${serverId}`);
-    }
-
-    async joinServer(serverId: number) {
-        const response = await api.post(
-            `/servers/${serverId}/join`
-        );
+    async transferOwnership(
+        serverId: number,
+        newOwnerId: number
+    ): Promise<Server> {
+        const response =
+            await api.patch<Server>(
+                `/servers/${serverId}/transfer`,
+                {
+                    new_owner_id:
+                        newOwnerId,
+                }
+            );
 
         return response.data;
     }
 
-    async leaveServer(serverId: number) {
-        const response = await api.post(
-            `/servers/${serverId}/leave`
-        );
+    async kickMember(
+        serverId: number,
+        userId: number
+    ): Promise<{ message: string }> {
+        const response =
+            await api.delete<{
+                message: string;
+            }>(
+                `/servers/${serverId}/members/${userId}`
+            );
 
         return response.data;
     }

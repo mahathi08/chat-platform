@@ -1,4 +1,6 @@
-import axios, {
+import axios from "axios";
+
+import type {
     AxiosError,
     AxiosInstance,
     InternalAxiosRequestConfig,
@@ -91,7 +93,11 @@ api.interceptors.response.use(
                 const refreshToken = getRefreshToken();
 
                 if (!refreshToken) {
-                    throw new Error("No refresh token");
+
+                    logoutStorage();
+
+                    return Promise.reject(error);
+
                 }
 
                 const response = await axios.post(
@@ -116,8 +122,6 @@ api.interceptors.response.use(
                 processQueue(err, null);
 
                 logoutStorage();
-
-                window.location.href = "/login";
 
                 return Promise.reject(err);
             } finally {

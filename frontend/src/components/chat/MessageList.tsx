@@ -1,58 +1,24 @@
-import { useEffect, useState } from "react";
-
-import messageService from "../../services/message.service";
-
-import { Message } from "../../types/message";
+import type { Message } from "../../types/message";
 
 import MessageBubble from "./MessageBubble";
 
-interface Props {
-    channelId: number;
+interface MessageListProps {
+    messages: Message[];
 }
 
 const MessageList = ({
-    channelId,
-}: Props) => {
-    const [messages, setMessages] =
-        useState<Message[]>([]);
-
-    const [loading, setLoading] =
-        useState(true);
-
-    useEffect(() => {
-        loadMessages();
-    }, [channelId]);
-
-    const loadMessages = async () => {
-        try {
-            const response =
-                await messageService.getMessages(
-                    channelId
-                );
-
-            setMessages(
-                response.messages ??
-                    response
-            );
-        } catch (error) {
-            console.error(error);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    if (loading) {
+    messages,
+}: MessageListProps) => {
+    if (messages.length === 0) {
         return (
-            <div className="p-6">
-
-                Loading messages...
-
+            <div className="flex h-full items-center justify-center text-zinc-500">
+                No messages yet.
             </div>
         );
     }
 
     return (
-        <div className="h-full overflow-y-auto">
+        <div className="flex h-full flex-col overflow-y-auto px-4 py-4">
 
             {messages.map((message) => (
                 <MessageBubble

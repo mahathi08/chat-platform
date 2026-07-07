@@ -1,20 +1,24 @@
 import {
     createContext,
+    useCallback,
     useContext,
     useEffect,
     useMemo,
     useState,
-    ReactNode,
 } from "react";
-
+import type {ReactNode} from "react";
+import { getAccessToken } from "../utils/storage";
 import serverService from "../services/server.service";
-import { Server } from "../types/server";
+import type { Server } from "../types/server";
 
 interface ServerContextType {
     servers: Server[];
     loading: boolean;
-    refreshServers: () => Promise<void>;
+
     currentServer: Server | null;
+
+    refreshServers: () => Promise<void>;
+
     setCurrentServer: React.Dispatch<
         React.SetStateAction<Server | null>
     >;
@@ -29,45 +33,82 @@ export const ServerProvider = ({
 }: {
     children: ReactNode;
 }) => {
-    const [servers, setServers] = useState<Server[]>([]);
+    const [servers, setServers] =
+        useState<Server[]>([]);
+
     const [currentServer, setCurrentServer] =
         useState<Server | null>(null);
-    const [loading, setLoading] = useState(true);
 
-    const refreshServers = async () => {
+    const [loading, setLoading] =
+        useState(true);
+
+    const refreshServers = useCallback(async () => {
+
+        const token = getAccessToken();
+
+        if (!token) {
+            setServers([]);
+            setCurrentServer(null);
+            setLoading(false);
+            return;
+        }
+
+        setLoading(true);
+
         try {
-            const data =
-                await serverService.getServers();
+            const response = await serverService.getServers();
 
-            const list =
-                data.servers ?? data;
+            const list = response.servers ?? response;
 
             setServers(list);
 
-            if (
-                list.length > 0 &&
-                !currentServer
-            ) {
-                setCurrentServer(list[0]);
+            if (list.length === 0) {
+                setCurrentServer(null);
+                return;
             }
+
+            setCurrentServer(previous =>
+                previous
+                    ? list.find(s => s.id === previous.id) ?? list[0]
+                    : list[0]
+            );
+        } catch (error) {
+            console.error(error);
+            setServers([]);
+            setCurrentServer(null);
         } finally {
             setLoading(false);
         }
-    };
+
+    }, []);
 
     useEffect(() => {
+
+        const token = getAccessToken();
+
+        if (!token) {
+            setLoading(false);
+            return;
+        }
+
         refreshServers();
-    }, []);
+
+    }, [refreshServers]);
 
     const value = useMemo(
         () => ({
             servers,
             loading,
-            refreshServers,
             currentServer,
+            refreshServers,
             setCurrentServer,
         }),
-        [servers, loading, currentServer]
+        [
+            servers,
+            loading,
+            currentServer,
+            refreshServers,
+        ]
     );
 
     return (
@@ -83,7 +124,7 @@ export const useServer = () => {
 
     if (!context) {
         throw new Error(
-            "useServer must be used inside ServerProvider"
+            "useServer must be used inside ServerProvider."
         );
     }
 

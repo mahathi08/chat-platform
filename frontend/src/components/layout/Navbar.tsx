@@ -1,18 +1,38 @@
-import { LogOut, Moon, Sun, Search } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+
+import {
+    LogOut,
+    Moon,
+    Sun,
+    Search,
+    Bell,
+} from "lucide-react";
 
 import useAuth from "../../hooks/useAuth";
 import { useTheme } from "../../contexts/ThemeContext";
 import { useSocket } from "../../contexts/SocketContext";
 
 const Navbar = () => {
+
+    const navigate = useNavigate();
+
     const { user, logout } = useAuth();
 
     const { theme, toggleTheme } = useTheme();
 
     const { connected } = useSocket();
 
+    const handleLogout = async () => {
+
+        await logout();
+
+        navigate("/login");
+
+    };
+
     return (
-        <header className="flex h-16 items-center justify-between border-b border-gray-200 bg-white px-6 dark:border-gray-800 dark:bg-gray-950">
+
+        <header className="flex h-16 items-center justify-between border-b border-zinc-800 bg-zinc-900 px-6">
 
             {/* Search */}
 
@@ -20,17 +40,18 @@ const Navbar = () => {
 
                 <Search
                     size={18}
-                    className="absolute left-3 top-3 text-gray-400"
+                    className="absolute left-3 top-3 text-zinc-500"
                 />
 
                 <input
+                    type="text"
                     placeholder="Search..."
-                    className="w-full rounded-lg border border-gray-300 py-2 pl-10 pr-4 outline-none focus:border-blue-500 dark:border-gray-700 dark:bg-gray-900"
+                    className="w-full rounded-lg border border-zinc-700 bg-zinc-800 py-2 pl-10 pr-4 text-white outline-none transition focus:border-blue-500"
                 />
 
             </div>
 
-            {/* Right */}
+            {/* Right Side */}
 
             <div className="flex items-center gap-5">
 
@@ -44,56 +65,69 @@ const Navbar = () => {
                         }`}
                     />
 
-                    <span className="text-sm">
+                    <span className="text-sm text-zinc-300">
 
                         {connected
-                            ? "Online"
-                            : "Offline"}
+                            ? "Connected"
+                            : "Disconnected"}
 
                     </span>
 
                 </div>
 
                 <button
-                    onClick={toggleTheme}
-                    className="rounded-lg p-2 hover:bg-gray-200 dark:hover:bg-gray-800"
+                    type="button"
+                    aria-label="Notifications"
+                    title="Notifications"
+                    className="rounded-lg p-2 text-zinc-400 transition hover:bg-zinc-800 hover:text-white"
                 >
-                    {theme === "dark" ? (
-                        <Sun size={20} />
-                    ) : (
-                        <Moon size={20} />
-                    )}
+                    <Bell size={20} />
+                </button>
+
+                <button
+                    type="button"
+                    aria-label="Toggle theme"
+                    title="Toggle theme"
+                    onClick={toggleTheme}
+                    className="rounded-lg p-2 text-zinc-400 transition hover:bg-zinc-800 hover:text-white"
+                >
+                    {theme === "dark"
+                        ? <Sun size={20} />
+                        : <Moon size={20} />}
                 </button>
 
                 <div className="flex items-center gap-3">
 
-                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-600 text-lg font-bold text-white">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-600 font-bold text-white">
 
-                        {user?.username?.[0]?.toUpperCase()}
+                        {user?.username?.charAt(0).toUpperCase()}
 
                     </div>
 
                     <div>
 
-                        <p className="font-semibold">
+                        <div className="font-semibold text-white">
 
                             {user?.username}
 
-                        </p>
+                        </div>
 
-                        <p className="text-sm text-gray-500">
+                        <div className="text-xs text-zinc-400">
 
                             {user?.email}
 
-                        </p>
+                        </div>
 
                     </div>
 
                 </div>
 
                 <button
-                    onClick={logout}
-                    className="rounded-lg p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"
+                    type="button"
+                    aria-label="Logout"
+                    title="Logout"
+                    onClick={handleLogout}
+                    className="rounded-lg p-2 text-red-500 transition hover:bg-red-900/30"
                 >
                     <LogOut size={20} />
                 </button>
@@ -101,7 +135,9 @@ const Navbar = () => {
             </div>
 
         </header>
+
     );
+
 };
 
 export default Navbar;

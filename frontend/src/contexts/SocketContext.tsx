@@ -1,25 +1,28 @@
 import {
     createContext,
-    ReactNode,
+    useCallback,
     useContext,
     useEffect,
     useMemo,
     useState,
 } from "react";
-
+import type {ReactNode} from "react";
 import websocket from "../services/websocket.service";
-
 import useAuth from "../hooks/useAuth";
 
 interface SocketContextType {
     connected: boolean;
 
     socket: typeof websocket;
+
+    connect: () => void;
+
+    disconnect: () => void;
 }
 
 const SocketContext =
-    createContext<SocketContextType | null>(
-        null
+    createContext<SocketContextType | undefined>(
+        undefined
     );
 
 export const SocketProvider = ({
@@ -32,12 +35,29 @@ export const SocketProvider = ({
     const [connected, setConnected] =
         useState(false);
 
-    useEffect(() => {
-        if (!isAuthenticated) return;
-
+    const connect = useCallback(() => {
         websocket.connect();
 
-        const interval = setInterval(() => {
+        setConnected(
+            websocket.isConnected()
+        );
+    }, []);
+
+    const disconnect = useCallback(() => {
+        websocket.disconnect();
+
+        setConnected(false);
+    }, []);
+
+    useEffect(() => {
+        if (!isAuthenticated) {
+            disconnect();
+            return;
+        }
+
+        connect();
+
+        const interval = window.setInterval(() => {
             websocket.ping();
 
             setConnected(
@@ -46,19 +66,28 @@ export const SocketProvider = ({
         }, 30000);
 
         return () => {
-            clearInterval(interval);
+            window.clearInterval(interval);
 
-            websocket.disconnect();
+            disconnect();
         };
-    }, [isAuthenticated]);
+    }, [
+        isAuthenticated,
+        connect,
+        disconnect,
+    ]);
 
     const value = useMemo(
         () => ({
             connected,
-
             socket: websocket,
+            connect,
+            disconnect,
         }),
-        [connected]
+        [
+            connected,
+            connect,
+            disconnect,
+        ]
     );
 
     return (
@@ -72,10 +101,11 @@ export const useSocket = () => {
     const context =
         useContext(SocketContext);
 
-    if (!context)
+    if (!context) {
         throw new Error(
-            "useSocket must be used inside SocketProvider"
+            "useSocket must be used inside SocketProvider."
         );
+    }
 
     return context;
 };
