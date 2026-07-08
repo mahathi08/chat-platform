@@ -247,7 +247,7 @@ const MessageBubble = ({
                         canDelete={canDelete}
                         canPin={canPin}
                         content={message.content}
-                        onReply={onReply}
+                        // onReply={onReply}
                         onPin={onPin}
                         onDelete={() => onDelete(message.id)}
                         onEdit={() => setEditing(true)}

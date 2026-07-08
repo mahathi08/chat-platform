@@ -130,6 +130,14 @@ const DirectMessage = () => {
                     messages={messages}
                     channelName="Direct Message"
                     description="Private conversation"
+                    canPin={false}
+                    isOwner={false}
+                    isAdmin={false}
+                    replyingTo={null}
+                    onReply={() => {}}
+                    onEdit={async () => {}}
+                    onDelete={async () => {}}
+                    onPin={async () => {}}
                     onSend={sendMessage}
                 />
 

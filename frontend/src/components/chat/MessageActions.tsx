@@ -1,7 +1,7 @@
 import {
     Copy,
     Edit3,
-    MessageSquareReply,
+    // MessageSquareReply,
     MoreHorizontal,
     Pin,
     Trash2,
@@ -18,7 +18,7 @@ interface Props {
 
     canPin: boolean;
 
-    onReply: () => void;
+    // onReply: () => void;
 
     onEdit: () => void;
 
@@ -34,7 +34,7 @@ const MessageActions = ({
     canEdit,
     canDelete,
     canPin,
-    onReply,
+    // onReply,
     onEdit,
     onDelete,
     onPin,

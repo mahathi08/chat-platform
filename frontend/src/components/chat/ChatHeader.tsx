@@ -1,9 +1,9 @@
 import {
     Hash,
-    Users,
-    Search,
-    Bell,
-    Pin,
+    // Users,
+    // Search,
+    // Bell,
+    // Pin,
 } from "lucide-react";
 
 interface ChatHeaderProps {
