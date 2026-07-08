@@ -2,8 +2,8 @@ import { Outlet } from "react-router-dom";
 
 import ServerRail from "../components/navigation/ServerRail";
 import ChannelSidebar from "../components/navigation/ChannelSidebar";
-import MemberSidebar from "../components/navigation/MemberSidebar";
 import Topbar from "../components/navigation/Topbar";
+import MemberSidebar from "../components/navigation/MemberSidebar";
 
 import Spinner from "../components/common/Spinner";
 

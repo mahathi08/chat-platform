@@ -6,6 +6,7 @@ from app.api.dependencies.database import get_db
 from app.api.dependencies.server import (
     get_server_admin,
     get_server_owner,
+    get_server_member,
 )
 
 from app.models.server_member import ServerMember
@@ -28,6 +29,10 @@ from app.services.server_service import (
     join_server,
     leave_server,
     get_server_members,
+    kick_member,
+    promote_member,
+    demote_member,
+    transfer_ownership,
 )
 
 router = APIRouter(
@@ -35,6 +40,10 @@ router = APIRouter(
     tags=["Servers"],
 )
 
+
+# ==========================================================
+# Servers
+# ==========================================================
 
 @router.post(
     "/",
@@ -74,27 +83,9 @@ def my_servers(
 def get(
     server_id: int,
     db: Session = Depends(get_db),
+    member: ServerMember = Depends(get_server_member),
 ):
     return get_server_by_id(
-        db,
-        server_id,
-    )
-
-
-# ===================================================
-# NEW MEMBERS ENDPOINT
-# ===================================================
-
-@router.get(
-    "/{server_id}/members",
-    response_model=list[ServerMemberResponse],
-)
-def members(
-    server_id: int,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
-):
-    return get_server_members(
         db,
         server_id,
     )
@@ -134,6 +125,10 @@ def delete(
     return None
 
 
+# ==========================================================
+# Membership
+# ==========================================================
+
 @router.post(
     "/{server_id}/join",
 )
@@ -161,4 +156,101 @@ def leave(
         db,
         server_id,
         current_user.id,
+    )
+
+
+@router.get(
+    "/{server_id}/members",
+    response_model=list[ServerMemberResponse],
+)
+def members(
+    server_id: int,
+    db: Session = Depends(get_db),
+    member: ServerMember = Depends(get_server_member),
+):
+    return get_server_members(
+        db,
+        server_id,
+    )
+
+
+# ==========================================================
+# Member Administration
+# ==========================================================
+
+@router.delete(
+    "/{server_id}/members/{user_id}",
+)
+def kick(
+    server_id: int,
+    user_id: int,
+    db: Session = Depends(get_db),
+    member: ServerMember = Depends(get_server_admin),
+):
+    return kick_member(
+        db,
+        server_id,
+        user_id,
+    )
+
+@router.patch(
+    "/{server_id}/members/{user_id}/promote",
+)
+def promote(
+    server_id: int,
+    user_id: int,
+    db: Session = Depends(get_db),
+    member: ServerMember = Depends(get_server_owner),
+):
+    promote_member(
+        db,
+        server_id,
+        user_id,
+    )
+
+    return {
+        "message": "Member promoted."
+    }
+
+
+@router.patch(
+    "/{server_id}/members/{user_id}/demote",
+)
+def demote(
+    server_id: int,
+    user_id: int,
+    db: Session = Depends(get_db),
+    member: ServerMember = Depends(get_server_owner),
+):
+    demote_member(
+        db,
+        server_id,
+        user_id,
+    )
+
+    return {
+        "message": "Member demoted."
+    }
+
+# ==========================================================
+# Ownership
+# ==========================================================
+# ==========================================================
+# Ownership
+# ==========================================================
+
+@router.patch(
+    "/{server_id}/transfer/{user_id}",
+    response_model=ServerResponse,
+)
+def transfer(
+    server_id: int,
+    user_id: int,
+    db: Session = Depends(get_db),
+    member: ServerMember = Depends(get_server_owner),
+):
+    return transfer_ownership(
+        db,
+        server_id,
+        user_id,
     )

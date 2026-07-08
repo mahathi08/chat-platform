@@ -3,9 +3,11 @@ from sqlalchemy.orm import Session
 
 from app.api.dependencies.auth import get_current_user
 from app.api.dependencies.database import get_db
+
 from app.models.server import Server
 from app.models.server_member import ServerMember
 from app.models.user import User
+from app.models.enums import MemberRole
 
 
 def get_server(
@@ -20,10 +22,9 @@ def get_server(
     )
 
     if server is None:
-
         raise HTTPException(
             status_code=404,
-            detail="Server not found",
+            detail="Server not found.",
         )
 
     return server
@@ -45,7 +46,6 @@ def get_server_member(
     )
 
     if member is None:
-
         raise HTTPException(
             status_code=403,
             detail="You are not a member of this server.",
@@ -56,10 +56,12 @@ def get_server_member(
 
 def get_server_admin(
     member: ServerMember = Depends(get_server_member),
-):
+) -> ServerMember:
 
-    if member.role not in ("owner", "admin"):
-
+    if member.role not in (
+        MemberRole.OWNER,
+        MemberRole.ADMIN,
+    ):
         raise HTTPException(
             status_code=403,
             detail="Administrator permission required.",
@@ -70,10 +72,9 @@ def get_server_admin(
 
 def get_server_owner(
     member: ServerMember = Depends(get_server_member),
-):
+) -> ServerMember:
 
-    if member.role != "owner":
-
+    if member.role != MemberRole.OWNER:
         raise HTTPException(
             status_code=403,
             detail="Owner permission required.",

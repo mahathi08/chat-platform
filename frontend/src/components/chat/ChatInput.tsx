@@ -1,6 +1,18 @@
-import { useState } from "react";
+import {
+    useRef,
+    useState,
+} from "react";
 
-import type { KeyboardEvent } from "react";
+import type {
+    ChangeEvent,
+    KeyboardEvent,
+} from "react";
+
+import {
+    SendHorizonal,
+    Paperclip,
+    Smile,
+} from "lucide-react";
 
 interface ChatInputProps {
     onSend: (content: string) => Promise<void>;
@@ -16,6 +28,34 @@ const ChatInput = ({
     const [sending, setSending] =
         useState(false);
 
+    const textareaRef =
+        useRef<HTMLTextAreaElement>(null);
+
+    const autoResize = () => {
+
+        if (!textareaRef.current) return;
+
+        textareaRef.current.style.height =
+            "0px";
+
+        textareaRef.current.style.height =
+            `${Math.min(
+                textareaRef.current.scrollHeight,
+                180
+            )}px`;
+
+    };
+
+    const handleChange = (
+        e: ChangeEvent<HTMLTextAreaElement>
+    ) => {
+
+        setMessage(e.target.value);
+
+        autoResize();
+
+    };
+
     const send = async () => {
 
         const content = message.trim();
@@ -30,6 +70,13 @@ const ChatInput = ({
             await onSend(content);
 
             setMessage("");
+
+            if (textareaRef.current) {
+
+                textareaRef.current.style.height =
+                    "48px";
+
+            }
 
         } finally {
 
@@ -58,43 +105,107 @@ const ChatInput = ({
 
     return (
 
-        <div className="border-t border-zinc-800 bg-zinc-900 p-4">
+        <div className="border-t border-zinc-800 bg-zinc-950 px-6 py-5">
 
-            <div className="flex gap-3">
+            <div className="rounded-xl border border-zinc-800 bg-zinc-900">
 
                 <textarea
-                    rows={2}
+                    ref={textareaRef}
+                    rows={1}
                     value={message}
-                    onChange={(e) =>
-                        setMessage(
-                            e.target.value
-                        )
-                    }
+                    onChange={handleChange}
                     onKeyDown={onKeyDown}
-                    placeholder="Type a message..."
-                    className="flex-1 resize-none rounded-lg border border-zinc-700 bg-zinc-800 px-4 py-3 text-white outline-none transition focus:border-blue-500"
+                    placeholder="Message #general"
+                    className="
+                        min-h-12
+                        max-h-44
+                        w-full
+                        resize-none
+                        overflow-y-auto
+                        rounded-t-xl
+                        bg-transparent
+                        px-5
+                        py-4
+                        text-white
+                        outline-none
+                        placeholder:text-zinc-500
+                    "
                 />
 
-                <button
-                    onClick={send}
-                    disabled={
-                        sending ||
-                        message.trim().length === 0
-                    }
-                    className="rounded-lg bg-blue-600 px-6 font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
-                >
+                <div className="flex items-center justify-between border-t border-zinc-800 px-4 py-2">
 
-                    {sending
-                        ? "..."
-                        : "Send"}
+                    <div className="flex items-center gap-2">
 
-                </button>
+                        <button
+                            className="rounded-lg p-2 text-zinc-400 transition hover:bg-zinc-800 hover:text-white"
+                            title="Attach file"
+                        >
+
+                            <Paperclip size={20} />
+
+                        </button>
+
+                        <button
+                            className="rounded-lg p-2 text-zinc-400 transition hover:bg-zinc-800 hover:text-yellow-400"
+                            title="Emoji"
+                        >
+
+                            <Smile size={20} />
+
+                        </button>
+
+                    </div>
+
+                    <button
+                        onClick={send}
+                        disabled={
+                            sending ||
+                            message.trim() === ""
+                        }
+                        className="
+                            flex
+                            items-center
+                            gap-2
+                            rounded-lg
+                            bg-indigo-600
+                            px-5
+                            py-2
+                            font-medium
+                            text-white
+                            transition
+                            hover:bg-indigo-500
+                            disabled:cursor-not-allowed
+                            disabled:opacity-40
+                        "
+                    >
+
+                        <SendHorizonal size={18} />
+
+                        {sending
+                            ? "Sending..."
+                            : "Send"}
+
+                    </button>
+
+                </div>
 
             </div>
 
-            <p className="mt-2 text-xs text-zinc-500">
-                Press Enter to send • Shift + Enter for a new line
-            </p>
+            <div className="mt-2 flex justify-between px-1 text-xs text-zinc-500">
+
+                <span>
+
+                    Press <b>Enter</b> to send
+
+                </span>
+
+                <span>
+
+                    <b>Shift + Enter</b> for a new line
+
+                </span>
+
+            </div>
 
         </div>
 

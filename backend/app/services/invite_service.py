@@ -1,17 +1,26 @@
-from datetime import datetime
+from datetime import datetime, UTC
+import secrets
 
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.models.invite import Invite
 from app.models.server_member import ServerMember
-import secrets
-from app.models.enums import MemberRole
-
+from app.models.enums import (
+    MemberRole,
+    InviteStatus,
+)
 from app.schemas.invite import (
     InviteCreate,
     InviteListResponse,
 )
+
+
+# ==========================================================
+# Helpers
+# ==========================================================
+
+from sqlalchemy.orm import joinedload
 
 def get_invite(
     db: Session,
@@ -20,6 +29,7 @@ def get_invite(
 
     invite = (
         db.query(Invite)
+        .options(joinedload(Invite.server))
         .filter(
             Invite.code == invite_code,
         )
@@ -27,7 +37,6 @@ def get_invite(
     )
 
     if invite is None:
-
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Invite not found.",
@@ -35,8 +44,39 @@ def get_invite(
 
     return invite
 
-import secrets
+def validate_invite(
+    invite: Invite,
+):
 
+    if invite.status != InviteStatus.ACTIVE:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invite is no longer active.",
+        )
+
+    if (
+        invite.expires_at
+        and invite.expires_at
+        < datetime.now(UTC).replace(tzinfo=None)
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invite expired.",
+        )
+
+    if (
+        invite.max_uses > 0
+        and invite.uses >= invite.max_uses
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invite usage limit reached.",
+        )
+
+
+# ==========================================================
+# Create Invite
+# ==========================================================
 
 def create_invite(
     db: Session,
@@ -54,11 +94,12 @@ def create_invite(
         code = secrets.token_urlsafe(8)
 
     invite = Invite(
-        code=code,
         server_id=server_id,
         creator_id=data.creator_id,
+        code=code,
         expires_at=data.expires_at,
         max_uses=data.max_uses,
+        status=InviteStatus.ACTIVE,
     )
 
     db.add(invite)
@@ -68,6 +109,11 @@ def create_invite(
     db.refresh(invite)
 
     return invite
+
+
+# ==========================================================
+# List Invites
+# ==========================================================
 
 def get_server_invites(
     db: Session,
@@ -79,6 +125,9 @@ def get_server_invites(
         .filter(
             Invite.server_id == server_id,
         )
+        .order_by(
+            Invite.created_at.desc()
+        )
         .all()
     )
 
@@ -86,28 +135,10 @@ def get_server_invites(
         invites=invites,
     )
 
-def validate_invite(
-    invite: Invite,
-):
 
-    if invite.expires_at:
-
-        if invite.expires_at < datetime.now(datetime.UTC).replace(tzinfo=None):
-
-            raise HTTPException(
-                status.HTTP_400_BAD_REQUEST,
-                detail="Invite expired.",
-            )
-
-    if (
-        invite.max_uses
-        and invite.uses >= invite.max_uses
-    ):
-
-        raise HTTPException(
-            status.HTTP_400_BAD_REQUEST,
-            detail="Invite has reached its usage limit.",
-        )
+# ==========================================================
+# Join Server
+# ==========================================================
 
 def join_with_invite(
     db: Session,
@@ -132,10 +163,9 @@ def join_with_invite(
     )
 
     if existing:
-
         raise HTTPException(
-            status.HTTP_409_CONFLICT,
-            detail="Already a member.",
+            status_code=status.HTTP_409_CONFLICT,
+            detail="You are already a member of this server.",
         )
 
     member = ServerMember(
@@ -148,11 +178,25 @@ def join_with_invite(
 
     invite.uses += 1
 
+    if (
+        invite.max_uses > 0
+        and invite.uses >= invite.max_uses
+    ):
+        invite.status = InviteStatus.EXPIRED
+
     db.commit()
+
+    db.refresh(invite)
 
     return {
         "message": "Joined server successfully.",
+        "server_id": invite.server_id,
     }
+
+
+# ==========================================================
+# Revoke Invite
+# ==========================================================
 
 def revoke_invite(
     db: Session,
@@ -164,10 +208,14 @@ def revoke_invite(
         invite_code,
     )
 
-    db.delete(invite)
+    invite.status = InviteStatus.REVOKED
 
     db.commit()
 
+
+# ==========================================================
+# Cleanup
+# ==========================================================
 
 def delete_expired_invites(
     db: Session,
@@ -176,10 +224,9 @@ def delete_expired_invites(
     (
         db.query(Invite)
         .filter(
-            Invite.expires_at < datetime.now(datetime.UTC).replace(tzinfo=None)
+            Invite.status == InviteStatus.EXPIRED
         )
         .delete()
     )
 
     db.commit()
-

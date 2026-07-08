@@ -1,10 +1,14 @@
 from datetime import datetime, UTC
 
 from fastapi import HTTPException, status
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import (
+    Session,
+    joinedload,
+)
 
 from app.models.channel import Channel
 from app.models.message import Message
+from app.models.server_member import ServerMember
 
 from app.schemas.message import (
     MessageCreate,
@@ -40,6 +44,32 @@ def get_channel(
     return channel
 
 
+def require_admin_or_owner(
+    db: Session,
+    channel: Channel,
+    user_id: int,
+):
+    member = (
+        db.query(ServerMember)
+        .filter(
+            ServerMember.server_id == channel.server_id,
+            ServerMember.user_id == user_id,
+        )
+        .first()
+    )
+
+    if member is None:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not a server member.",
+        )
+
+    if member.role not in ("OWNER", "ADMIN"):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only admins and owners can pin messages.",
+        )
+
 def get_message(
     db: Session,
     message_id: int,
@@ -50,6 +80,9 @@ def get_message(
 
     message = (
         db.query(Message)
+        .options(
+            joinedload(Message.author)
+        )
         .filter(
             Message.id == message_id,
             Message.is_deleted == False,
@@ -66,18 +99,29 @@ def get_message(
     return message
 
 
-def get_message_by_id(
-    db: Session,
-    message_id: int,
-) -> Message:
-    """
-    Alias for get_message().
-    """
+# def get_message_by_id(
+#     db: Session,
+#     message_id: int,
+# ) -> Message:
+#     """
+#     Alias for get_message().
+#     """
 
-    return get_message(
-        db,
-        message_id,
-    )
+#     message = get_message(
+#         db,
+#         message_id,
+#     )
+
+#     channel = get_channel(
+#         db,
+#         message.channel_id,
+#     )
+
+#     require_admin_or_owner(
+#         db,
+#         channel,
+#         user_id,
+#     )
 
 
 # =====================================================
@@ -114,13 +158,22 @@ def send_message(
     db.commit()
     db.refresh(message)
 
-    return message
+    message = (
+        db.query(Message)
+        .options(
+            joinedload(Message.author)
+        )
+        .filter(
+            Message.id == message.id
+        )
+        .first()
+    )
 
+    return message
 
 # =====================================================
 # List Messages
 # =====================================================
-
 def get_channel_messages(
     db: Session,
     channel_id: int,
@@ -128,7 +181,7 @@ def get_channel_messages(
     page_size: int = 25,
 ) -> MessageListResponse:
     """
-    Get paginated channel messages.
+    Get paginated messages for one channel.
     """
 
     get_channel(
@@ -137,31 +190,33 @@ def get_channel_messages(
     )
 
     page = max(page, 1)
-    page_size = min(max(page_size, 1), 100)
+
+    page_size = min(
+        max(page_size, 1),
+        100,
+    )
+
+    offset = (page - 1) * page_size
 
     messages = (
         db.query(Message)
+        .options(
+            joinedload(Message.author)
+        )
         .filter(
             Message.channel_id == channel_id,
-            Message.is_deleted == False,
         )
         .order_by(
-            Message.created_at.desc()
+            Message.created_at.asc(),
         )
-        .offset(
-            (page - 1) * page_size
-        )
+        .offset(offset)
         .limit(page_size)
         .all()
     )
 
-    messages.reverse()
-
     return MessageListResponse(
         messages=messages,
     )
-
-
 # =====================================================
 # Update Message
 # =====================================================
@@ -181,11 +236,43 @@ def update_message(
         message_id,
     )
 
-    if message.author_id != user_id:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Cannot edit another user's message.",
+    channel = get_channel(
+        db,
+        message.channel_id,
+    )
+
+    member = (
+        db.query(ServerMember)
+        .filter(
+            ServerMember.server_id == channel.server_id,
+            ServerMember.user_id == user_id,
         )
+        .first()
+    )
+
+    is_admin = (
+        member is not None
+        and member.role in ("OWNER", "ADMIN")
+    )
+
+    if not is_admin:
+
+        if message.author_id != user_id:
+            raise HTTPException(
+                status_code=403,
+                detail="Cannot edit another user's message.",
+            )
+
+        age = (
+            datetime.now(UTC).replace(tzinfo=None)
+            - message.created_at
+        ).total_seconds()
+
+        if age > 300:
+            raise HTTPException(
+                status_code=403,
+                detail="Messages can only be edited within 5 minutes.",
+            )
 
     if message.is_deleted:
         raise HTTPException(
@@ -199,6 +286,17 @@ def update_message(
 
     db.commit()
     db.refresh(message)
+
+    message = (
+        db.query(Message)
+        .options(
+            joinedload(Message.author)
+        )
+        .filter(
+            Message.id == message.id
+        )
+        .first()
+    )
 
     return message
 
@@ -221,11 +319,43 @@ def delete_message(
         message_id,
     )
 
-    if message.author_id != user_id:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Cannot delete another user's message.",
+    channel = get_channel(
+        db,
+        message.channel_id,
+    )
+
+    member = (
+        db.query(ServerMember)
+        .filter(
+            ServerMember.server_id == channel.server_id,
+            ServerMember.user_id == user_id,
         )
+        .first()
+    )
+
+    is_admin = (
+        member is not None
+        and member.role in ("OWNER", "ADMIN")
+    )
+
+    if not is_admin:
+
+        if message.author_id != user_id:
+            raise HTTPException(
+                status_code=403,
+                detail="Cannot delete another user's message.",
+            )
+
+        age = (
+            datetime.now(UTC).replace(tzinfo=None)
+            - message.created_at
+        ).total_seconds()
+
+        if age > 300:
+            raise HTTPException(
+                status_code=403,
+                detail="Messages can only be deleted within 5 minutes.",
+            )
 
     message.is_deleted = True
     message.content = "This message was deleted."
@@ -309,6 +439,17 @@ def pin_message(
 
     db.refresh(message)
 
+    message = (
+        db.query(Message)
+        .options(
+            joinedload(Message.author)
+        )
+        .filter(
+            Message.id == message.id
+        )
+        .first()
+    )
+
     return message
 
 
@@ -337,6 +478,17 @@ def unpin_message(
     db.commit()
 
     db.refresh(message)
+
+    message = (
+        db.query(Message)
+        .options(
+            joinedload(Message.author)
+        )
+        .filter(
+            Message.id == message.id
+        )
+        .first()
+    )
 
     return message
 

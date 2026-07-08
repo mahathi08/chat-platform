@@ -115,20 +115,15 @@ export const removeUser = (): void => {
  * Theme
  */
 
-export const saveTheme = (
-    theme: string
-): void => {
-    localStorage.setItem(
-        STORAGE_KEYS.THEME,
-        theme
-    );
-};
+export function saveTheme(
+    theme:"light"|"dark"|"system"
+){
+    localStorage.setItem("theme",theme);
+}
 
-export const getTheme = (): string | null => {
-    return localStorage.getItem(
-        STORAGE_KEYS.THEME
-    );
-};
+export function getTheme(){
+    return localStorage.getItem("theme");
+}
 
 /**
  * Logout

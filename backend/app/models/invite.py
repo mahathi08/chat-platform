@@ -87,6 +87,6 @@ class Invite(Base):
 
     def __repr__(self):
         return (
-            f"<Invite(token='{self.token}', "
+            f"<Invite(code='{self.code}', "
             f"server={self.server_id})>"
         )

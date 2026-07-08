@@ -2,35 +2,41 @@ import { useEffect, useState } from "react";
 
 import { useParams } from "react-router-dom";
 
-import api from "../../services/api";
-
-import Button from "../../components/common/Button";
-
-interface Invite {
-    code: string;
-    uses: number;
-    max_uses: number | null;
-    expires_at: string | null;
-}
+import {
+    Copy,
+    Plus,
+    Trash2,
+    Check,
+} from "lucide-react";
+import inviteService from "../../services/invite.service";
+import type { Invite } from "../../services/invite.service";
+import useAuth from "../../hooks/useAuth";
+import serverService from "../../services/server.service";
 
 const InvitePage = () => {
 
     const { serverId } = useParams();
+    const { user } = useAuth();
 
-    const [
-        invites,
-        setInvites,
-    ] = useState<Invite[]>([]);
+    const [invites, setInvites] =
+        useState<Invite[]>([]);
 
-    const [
-        loading,
-        setLoading,
-    ] = useState(true);
+    const [loading, setLoading] =
+        useState(true);
 
-    const [
-        error,
-        setError,
-    ] = useState("");
+    const [copied, setCopied] =
+        useState("");
+    const [myRole, setMyRole] =
+        useState("");
+
+    const isOwner =
+        myRole === "OWNER";
+
+    const isAdmin =
+        myRole === "ADMIN";
+
+    const canManageInvites =
+        isOwner || isAdmin;
 
     useEffect(() => {
 
@@ -44,23 +50,36 @@ const InvitePage = () => {
 
     const loadInvites = async () => {
 
+        setLoading(true);
+
         try {
 
             const response =
-                await api.get(
-                    `/invites/servers/${serverId}`
+                await inviteService.getServerInvites(
+                    Number(serverId)
                 );
 
             setInvites(
-                response.data.invites ??
-                response.data
+                response.invites ??
+                response
             );
+            const members =
+                await serverService.getMembers(
+                    Number(serverId)
+                );
 
-        } catch (err: any) {
+            const list =
+                members.members ??
+                members;
 
-            setError(
-                err?.response?.data?.detail ??
-                "Unable to load invites."
+            const me =
+                list.find(
+                    (m: any) =>
+                        m.user.id === user?.id
+                );
+
+            setMyRole(
+                me?.role ?? ""
             );
 
         } finally {
@@ -73,46 +92,47 @@ const InvitePage = () => {
 
     const createInvite = async () => {
 
-        try {
+        await inviteService.createInvite(
+            Number(serverId)
+        );
 
-            await api.post(
-                `/invites/servers/${serverId}`,
-                {
-                    expires_at: null,
-                    max_uses: null,
-                }
-            );
-
-            loadInvites();
-
-        } catch (err: any) {
-
-            alert(
-                err?.response?.data?.detail ??
-                "Failed to create invite."
-            );
-
-        }
+        loadInvites();
 
     };
 
     const revokeInvite = async (
-        code: string
+        code: string,
     ) => {
 
         if (
             !confirm(
                 "Revoke this invite?"
             )
-        ) {
-            return;
-        }
+        ) return;
 
-        await api.delete(
-            `/invites/${code}`
+        await inviteService.revokeInvite(
+            code
         );
 
         loadInvites();
+
+    };
+
+    const copyInvite = async (
+        code: string,
+    ) => {
+
+        await navigator.clipboard.writeText(
+            `${window.location.origin}/invite/${code}`
+        );
+
+        setCopied(code);
+
+        setTimeout(() => {
+
+            setCopied("");
+
+        }, 2000);
 
     };
 
@@ -120,7 +140,7 @@ const InvitePage = () => {
 
         return (
 
-            <div className="flex h-full items-center justify-center bg-zinc-900 text-white">
+            <div className="flex h-full items-center justify-center bg-zinc-950 text-zinc-400">
 
                 Loading invites...
 
@@ -132,7 +152,7 @@ const InvitePage = () => {
 
     return (
 
-        <div className="h-full overflow-y-auto bg-zinc-900 p-8">
+        <div className="h-full overflow-y-auto bg-zinc-950 p-8">
 
             <div className="mx-auto max-w-5xl">
 
@@ -142,104 +162,135 @@ const InvitePage = () => {
 
                         <h1 className="text-3xl font-bold text-white">
 
-                            Server Invites
+                            Invite People
 
                         </h1>
 
                         <p className="mt-2 text-zinc-400">
 
-                            Create and manage invite links.
+                            Generate invite links to allow others to join this server.
 
                         </p>
 
                     </div>
 
-                    <Button
-                        onClick={createInvite}
-                    >
-                        Create Invite
-                    </Button>
+                    {canManageInvites && (
+
+                        <button
+                            onClick={createInvite}
+                            className="flex items-center gap-2 rounded-lg bg-indigo-600 px-5 py-3 font-medium text-white transition hover:bg-indigo-500"
+                        >
+
+                            <Plus size={18} />
+
+                            Create Invite
+
+                        </button>
+
+                    )}
 
                 </div>
 
-                {error && (
+                {invites.length === 0 && (
 
-                    <div className="mb-6 rounded-lg bg-red-900/30 p-3 text-red-300">
+                    <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-10 text-center text-zinc-500">
 
-                        {error}
+                        No active invites.
 
                     </div>
 
                 )}
 
-                <div className="space-y-4">
+                <div className="space-y-5">
 
                     {invites.map((invite) => (
 
                         <div
                             key={invite.code}
-                            className="rounded-xl border border-zinc-800 bg-zinc-950 p-5"
+                            className="rounded-xl border border-zinc-800 bg-zinc-900 p-6"
                         >
 
                             <div className="flex items-center justify-between">
 
-                                <div>
+                                <div className="space-y-3">
 
-                                    <div className="font-mono text-lg text-blue-400">
+                                    <div className="font-mono text-lg text-indigo-400">
 
                                         {invite.code}
 
                                     </div>
 
-                                    <div className="mt-2 text-sm text-zinc-400">
+                                    <div className="flex gap-6 text-sm text-zinc-400">
 
-                                        Uses:
-                                        {" "}
-                                        {invite.uses}
+                                        <span>
 
-                                        {invite.max_uses &&
-                                            ` / ${invite.max_uses}`}
+                                            Status:
+                                            {" "}
+                                            {invite.status}
+
+                                        </span>
+
+                                        <span>
+
+                                            Uses:
+                                            {" "}
+                                            {invite.uses}
+
+                                            {invite.max_uses > 0 &&
+                                                ` / ${invite.max_uses}`}
+
+                                        </span>
 
                                     </div>
 
                                     <div className="text-sm text-zinc-500">
 
                                         {invite.expires_at
-                                            ? `Expires: ${new Date(invite.expires_at).toLocaleString()}`
-                                            : "No expiration"}
+                                            ? `Expires ${new Date(invite.expires_at).toLocaleString()}`
+                                            : "Never expires"}
 
                                     </div>
 
                                 </div>
 
-                                <button
-                                    onClick={() =>
-                                        revokeInvite(
-                                            invite.code
-                                        )
-                                    }
-                                    className="rounded-lg bg-red-600 px-4 py-2 text-white transition hover:bg-red-700"
-                                >
+                                <div className="flex gap-3">
 
-                                    Revoke
+                                    <button
+                                        onClick={() =>
+                                            copyInvite(invite.code)
+                                        }
+                                        className="rounded-lg bg-zinc-800 p-3 transition hover:bg-zinc-700"
+                                    >
 
-                                </button>
+                                        {copied === invite.code
+                                            ? <Check size={18}/>
+                                            : <Copy size={18}/>}
+
+                                    </button>
+
+                                    {canManageInvites &&
+                                        invite.status === "ACTIVE" && (
+
+                                        <button
+                                            onClick={() =>
+                                                revokeInvite(invite.code)
+                                            }
+                                            className="rounded-lg bg-red-600 p-3 transition hover:bg-red-500"
+                                        >
+
+                                            <Trash2 size={18} />
+
+                                        </button>
+
+                                    )}
+
+                                </div>
 
                             </div>
 
                         </div>
 
                     ))}
-
-                    {invites.length === 0 && (
-
-                        <div className="rounded-xl border border-zinc-800 bg-zinc-950 p-10 text-center text-zinc-500">
-
-                            No active invites.
-
-                        </div>
-
-                    )}
 
                 </div>
 

@@ -8,29 +8,35 @@ import type {
 } from "../types/server";
 
 class ServerService {
+
     async getServers(): Promise<ServerListResponse> {
+
         const response =
             await api.get<ServerListResponse>(
                 "/servers"
             );
 
         return response.data;
+
     }
 
     async getServer(
-        serverId: number
+        serverId: number,
     ): Promise<Server> {
+
         const response =
             await api.get<Server>(
                 `/servers/${serverId}`
             );
 
         return response.data;
+
     }
 
     async createServer(
-        data: ServerCreate
+        data: ServerCreate,
     ): Promise<Server> {
+
         const response =
             await api.post<Server>(
                 "/servers",
@@ -38,12 +44,14 @@ class ServerService {
             );
 
         return response.data;
+
     }
 
     async updateServer(
         serverId: number,
-        data: ServerUpdate
+        data: ServerUpdate,
     ): Promise<Server> {
+
         const response =
             await api.put<Server>(
                 `/servers/${serverId}`,
@@ -51,82 +59,114 @@ class ServerService {
             );
 
         return response.data;
+
     }
 
     async deleteServer(
-        serverId: number
+        serverId: number,
     ): Promise<void> {
+
         await api.delete(
             `/servers/${serverId}`
         );
+
     }
 
     async joinServer(
-        serverId: number
+        serverId: number,
     ): Promise<{ message: string }> {
+
         const response =
-            await api.post<{
-                message: string;
-            }>(
+            await api.post(
                 `/servers/${serverId}/join`
             );
 
         return response.data;
+
     }
 
     async leaveServer(
-        serverId: number
+        serverId: number,
     ): Promise<{ message: string }> {
+
         const response =
-            await api.post<{
-                message: string;
-            }>(
+            await api.post(
                 `/servers/${serverId}/leave`
             );
 
         return response.data;
+
     }
 
     async getMembers(
-        serverId: number
+        serverId: number,
     ) {
+
         const response =
             await api.get(
                 `/servers/${serverId}/members`
             );
 
         return response.data;
-    }
 
-    async transferOwnership(
-        serverId: number,
-        newOwnerId: number
-    ): Promise<Server> {
-        const response =
-            await api.patch<Server>(
-                `/servers/${serverId}/transfer`,
-                {
-                    new_owner_id:
-                        newOwnerId,
-                }
-            );
-
-        return response.data;
     }
 
     async kickMember(
         serverId: number,
-        userId: number
-    ): Promise<{ message: string }> {
+        userId: number,
+    ) {
+
         const response =
-            await api.delete<{
-                message: string;
-            }>(
+            await api.delete(
                 `/servers/${serverId}/members/${userId}`
             );
 
         return response.data;
+
     }
+
+    async promoteMember(
+        serverId: number,
+        userId: number,
+    ) {
+
+        const response =
+            await api.patch(
+                `/servers/${serverId}/members/${userId}/promote`
+            );
+
+        return response.data;
+
+    }
+
+    async demoteMember(
+        serverId: number,
+        userId: number,
+    ) {
+
+        const response =
+            await api.patch(
+                `/servers/${serverId}/members/${userId}/demote`
+            );
+
+        return response.data;
+
+    }
+
+    async transferOwnership(
+        serverId: number,
+        userId: number,
+    ): Promise<Server> {
+
+        const response =
+            await api.patch<Server>(
+                `/servers/${serverId}/transfer/${userId}`
+            );
+
+        return response.data;
+
+    }
+
 }
 
 export default new ServerService();

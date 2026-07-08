@@ -11,7 +11,7 @@ import {
     saveTheme,
 } from "../utils/storage";
 
-type Theme = "light" | "dark";
+type Theme = "light" | "dark" | "system";
 
 interface ThemeContextType {
     theme: Theme;
@@ -31,18 +31,15 @@ export const ThemeProvider = ({
     const getInitialTheme = (): Theme => {
         const stored = getTheme();
 
-        if (stored === "light" || stored === "dark") {
+        if (
+            stored === "light" ||
+            stored === "dark" ||
+            stored === "system"
+        ){
             return stored;
         }
 
-        if (
-            window.matchMedia &&
-            window.matchMedia("(prefers-color-scheme: dark)").matches
-        ) {
-            return "dark";
-        }
-
-        return "light";
+        return "system";
     };
 
     const [theme, setThemeState] = useState<Theme>(
@@ -50,20 +47,36 @@ export const ThemeProvider = ({
     );
 
     useEffect(() => {
-        document.documentElement.setAttribute(
-            "data-theme",
-            theme
-        );
+
+        let resolved = theme;
+
+        if(theme==="system"){
+
+            resolved = window.matchMedia(
+                "(prefers-color-scheme: dark)"
+            ).matches
+                ? "dark"
+                : "light";
+
+        }
 
         document.documentElement.classList.remove(
             "light",
             "dark"
         );
 
-        document.documentElement.classList.add(theme);
+        document.documentElement.classList.add(
+            resolved
+        );
+
+        document.documentElement.setAttribute(
+            "data-theme",
+            resolved
+        );
 
         saveTheme(theme);
-    }, [theme]);
+
+    },[theme]);
 
     const setTheme = (newTheme: Theme) => {
         setThemeState(newTheme);

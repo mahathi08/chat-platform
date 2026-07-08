@@ -8,7 +8,9 @@ import DashboardLayout from "../layouts/DashboardLayout";
 // Route Guards
 import ProtectedRoute from "../components/common/ProtectedRoute";
 import PublicRoute from "../components/common/PublicRoute";
-
+import JoinServer from "../pages/servers/JoinServer";
+import JoinServerPage from "../pages/invites/JoinServerPage";
+import ServerSettings from "../pages/servers/ServerSettings";
 // Auth
 import Login from "../pages/auth/Login";
 import Register from "../pages/auth/Register";
@@ -113,6 +115,10 @@ const router = createBrowserRouter([
                 element: <InvitePage />,
             },
             {
+                path: "servers/join",
+                element: <JoinServer />,
+            },
+            {
                 path: "servers/:serverId/channels/create",
                 element: <CreateChannel />,
             },
@@ -129,6 +135,10 @@ const router = createBrowserRouter([
                 element: <Notifications />,
             },
             {
+                path: "servers/:serverId/settings",
+                element: <ServerSettings />,
+            },
+            {
                 path: "settings/account",
                 element: <Account />,
             },
@@ -142,7 +152,14 @@ const router = createBrowserRouter([
             },
         ],
     },
-
+    {
+        path: "/invite/:code",
+        element: (
+            <ProtectedRoute>
+                <JoinServerPage />
+            </ProtectedRoute>
+        ),
+    },
     {
         path: "*",
         element: <NotFound />,

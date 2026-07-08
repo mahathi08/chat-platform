@@ -1,4 +1,5 @@
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, status, HTTPException
+from app.models.enums import MemberRole
 from sqlalchemy.orm import Session
 
 from app.api.dependencies.auth import get_current_user
@@ -106,7 +107,6 @@ def join(
         user_id=current_user.id,
     )
 
-
 @router.delete(
     "/{invite_code}",
     status_code=status.HTTP_204_NO_CONTENT,
@@ -114,11 +114,42 @@ def join(
 def revoke(
     invite_code: str,
     db: Session = Depends(get_db),
-    member: ServerMember = Depends(get_server_admin),
+    current_user: User = Depends(get_current_user),
 ):
     """
     Revoke an invite.
     """
+
+    invite = get_invite(
+        db=db,
+        invite_code=invite_code,
+    )
+
+    member = (
+        db.query(ServerMember)
+        .filter(
+            ServerMember.server_id == invite.server_id,
+            ServerMember.user_id == current_user.id,
+        )
+        .first()
+    )
+
+    if member is None:
+        raise HTTPException(
+            status_code=403,
+            detail="You are not a member of this server.",
+        )
+
+    from app.models.enums import MemberRole
+
+    if member.role not in (
+        MemberRole.OWNER,
+        MemberRole.ADMIN,
+    ):
+        raise HTTPException(
+            status_code=403,
+            detail="Administrator permission required.",
+        )
 
     revoke_invite(
         db=db,

@@ -1,68 +1,98 @@
 @import "tailwindcss";
 
-/* -------------------------------
-   Global Reset
---------------------------------*/
+/* =======================================================
+   Reset
+======================================================= */
 
 *,
 *::before,
-*::after {
-    box-sizing: border-box;
+*::after{
+    box-sizing:border-box;
 }
 
 html,
 body,
-#root {
-    width: 100%;
-    height: 100%;
-    margin: 0;
-    padding: 0;
+#root{
+    width:100%;
+    height:100%;
+    margin:0;
+    padding:0;
 }
 
-body {
-    font-family: Inter, system-ui, sans-serif;
+body{
+    font-family:Inter,system-ui,sans-serif;
+    overflow:hidden;
+    transition:.25s;
+}
 
-    background: #1e1f22;
+/* =======================================================
+   LIGHT THEME
+======================================================= */
 
-    color: #f2f3f5;
+html.light{
 
-    overflow: hidden;
+    --bg:#f4f5f7;
+    --bg-secondary:#ffffff;
+    --bg-tertiary:#eceef2;
 
-    -webkit-font-smoothing: antialiased;
+    --border:#d7d9dd;
 
-    -moz-osx-font-smoothing: grayscale;
+    --text:#18181b;
+    --text-secondary:#4b5563;
+
+    --primary:#5865f2;
+
+}
+
+/* =======================================================
+   DARK THEME
+======================================================= */
+
+html.dark{
+
+    --bg:#1e1f22;
+    --bg-secondary:#2b2d31;
+    --bg-tertiary:#313338;
+
+    --border:#3f4147;
+
+    --text:#ffffff;
+    --text-secondary:#9ca3af;
+
+    --primary:#5865f2;
+
+}
+
+body{
+
+    background:var(--bg);
+
+    color:var(--text);
+
 }
 
 button,
 input,
 textarea,
-select {
-    font: inherit;
+select{
+    font:inherit;
 }
 
-button {
-    cursor: pointer;
+a{
+    color:inherit;
+    text-decoration:none;
 }
 
-a {
-    text-decoration: none;
-    color: inherit;
+img{
+    display:block;
+    max-width:100%;
 }
 
-img {
-    display: block;
-    max-width: 100%;
+::-webkit-scrollbar{
+    width:8px;
 }
 
-::-webkit-scrollbar {
-    width: 8px;
-}
-
-::-webkit-scrollbar-thumb {
-    background: #4a4d55;
-    border-radius: 8px;
-}
-
-::-webkit-scrollbar-track {
-    background: transparent;
+::-webkit-scrollbar-thumb{
+    background:#666;
+    border-radius:8px;
 }

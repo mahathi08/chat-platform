@@ -47,7 +47,7 @@ const ChatHeader = ({
 
             <div className="flex items-center gap-2">
 
-                <button
+                {/* <button
                     className="rounded-lg p-2 text-zinc-400 transition hover:bg-zinc-800 hover:text-white"
                     title="Search"
                 >
@@ -66,14 +66,14 @@ const ChatHeader = ({
                     title="Notifications"
                 >
                     <Bell size={20} />
-                </button>
+                </button> */}
 
-                <button
+                {/* <button
                     className="rounded-lg p-2 text-zinc-400 transition hover:bg-zinc-800 hover:text-white"
                     title="Members"
                 >
                     <Users size={20} />
-                </button>
+                </button> */}
 
             </div>
 
