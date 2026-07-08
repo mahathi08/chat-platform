@@ -16,7 +16,7 @@ interface MessageBubbleProps {
     isOwner: boolean;
     isAdmin: boolean;
 
-    onReply: () => void;
+    // onReply: () => void;
 
     onEdit: (
         id: number,
@@ -32,7 +32,7 @@ interface MessageBubbleProps {
 
 const MessageBubble = ({
     message,
-    onReply,
+    // onReply,
     onEdit,
     onDelete,
     onPin,

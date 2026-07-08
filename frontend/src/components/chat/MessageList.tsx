@@ -148,7 +148,7 @@ const MessageList = ({
                                 key={item.message.id}
                                 message={item.message}
 
-                                onReply={() => onReply(item.message)}
+                                // onReply={() => onReply(item.message)}
                                 onEdit={onEdit}
                                 onDelete={onDelete}
                                 onPin={() => onPin(item.message)}

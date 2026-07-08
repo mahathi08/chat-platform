@@ -9,7 +9,7 @@ import {
 
 import {
     Link,
-    useLocation,
+    // useLocation,
 } from "react-router-dom";
 
 import useAuth from "../../hooks/useAuth";
@@ -30,12 +30,12 @@ const Topbar = () => {
     //     toggleTheme,
     // } = useTheme();
 
-    const location = useLocation();
+    // const location = useLocation();
 
-    const currentChannel =
-        location.pathname.startsWith("/channels/")
-            ? location.pathname.split("/")[2]
-            : null;
+    // const currentChannel =
+    //     location.pathname.startsWith("/channels/")
+    //         ? location.pathname.split("/")[2]
+    //         : null;
 
     return (
 
