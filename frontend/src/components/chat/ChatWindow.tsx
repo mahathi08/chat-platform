@@ -20,7 +20,7 @@ interface ChatWindowProps {
     isAdmin: boolean;
     replyingTo: Message | null;
 
-    onReply: (message: Message) => void;
+    // onReply: (message: Message) => void;
 
     onEdit: (
         id: number,
@@ -51,7 +51,7 @@ const ChatWindow = ({
 
     replyingTo,
 
-    onReply,
+    // onReply,
     onEdit,
     onDelete,
     onPin,
@@ -114,7 +114,7 @@ const ChatWindow = ({
 
                     <MessageList
                         messages={messages}
-                        onReply={onReply}
+                        // onReply={onReply}
                         onEdit={onEdit}
                         onDelete={onDelete}
                         onPin={onPin}

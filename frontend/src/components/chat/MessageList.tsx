@@ -12,7 +12,7 @@ import DateDivider from "./DateDivider";
 interface MessageListProps {
     messages: Message[];
 
-    onReply: (message: Message) => void;
+    // onReply: (message: Message) => void;
 
     canPin: boolean;
     isOwner: boolean;
@@ -34,7 +34,7 @@ interface MessageListProps {
 
 const MessageList = ({
     messages,
-    onReply,
+    // onReply,
     onEdit,
     onDelete,
     onPin,
