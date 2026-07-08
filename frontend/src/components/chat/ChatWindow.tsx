@@ -1,6 +1,6 @@
 import {
     MessageCircle,
-    Reply,
+    // Reply,
 } from "lucide-react";
 
 import ChatHeader from "./ChatHeader";
