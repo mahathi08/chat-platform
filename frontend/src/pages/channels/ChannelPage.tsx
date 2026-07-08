@@ -26,8 +26,8 @@ const ChannelPage = () => {
     const [loading, setLoading] =
         useState(true);
 
-    const [replyingTo, setReplyingTo] =
-        useState<Message | null>(null);
+    // const [replyingTo, setReplyingTo] =
+    //     useState<Message | null>(null);
 
     useEffect(() => {
         if (!channelId) return;
@@ -77,7 +77,8 @@ const ChannelPage = () => {
             await messageService.sendMessage(
                 Number(channelId),
                 content,
-                replyingTo?.id
+                // replyingTo?.id
+                undefined
             );
 
         setMessages((old) => [
@@ -85,7 +86,7 @@ const ChannelPage = () => {
             message,
         ]);
 
-        setReplyingTo(null);
+        // setReplyingTo(null);
     };
 
     const editMessage = async (
@@ -165,13 +166,13 @@ const ChannelPage = () => {
             channelName={channel.name}
             description={channel.description ?? ""}
 
-            replyingTo={replyingTo}
+            // replyingTo={replyingTo}
 
             canPin={isAdmin}
             isOwner={isOwner}
             isAdmin={isAdmin}
 
-            onReply={setReplyingTo}
+            // onReply={setReplyingTo}
             onEdit={editMessage}
             onDelete={deleteMessage}
             onPin={togglePin}

@@ -133,8 +133,8 @@ const DirectMessage = () => {
                     canPin={false}
                     isOwner={false}
                     isAdmin={false}
-                    replyingTo={null}
-                    onReply={() => {}}
+                    // replyingTo={null}
+                    // onReply={() => {}}
                     onEdit={async () => {}}
                     onDelete={async () => {}}
                     onPin={async () => {}}

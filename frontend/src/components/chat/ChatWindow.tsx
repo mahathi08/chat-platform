@@ -18,7 +18,7 @@ interface ChatWindowProps {
     isOwner: boolean;
 
     isAdmin: boolean;
-    replyingTo: Message | null;
+    // replyingTo: Message | null;
 
     // onReply: (message: Message) => void;
 
@@ -49,7 +49,7 @@ const ChatWindow = ({
     isOwner,
     isAdmin,
 
-    replyingTo,
+    // replyingTo,
 
     // onReply,
     onEdit,
@@ -129,7 +129,7 @@ const ChatWindow = ({
 
             {/* Reply Preview */}
 
-            {replyingTo && (
+            {/* {replyingTo && (
 
                 <div className="border-t border-zinc-700 bg-zinc-800 px-6 py-3">
 
@@ -156,7 +156,7 @@ const ChatWindow = ({
 
                 </div>
 
-            )}
+            )} */}
 
             <div className="border-t border-zinc-800 bg-[#313338]">
 
